@@ -1,18 +1,18 @@
-document.addEventListener("DOMContentLoaded", function() {
-    const lookupBtn = document.getElementById("lookup");
-    const resultDiv = document.getElementById("result");
+document.addEventListener("DOMContentLoaded", () => {
+    const result = document.getElementById("result");
+    const input = document.getElementById("country");
 
-    lookupBtn.addEventListener("click", function() {
-        const country = document.getElementById("country").value;
+    document.getElementById("lookup").addEventListener("click", () => {
+        const c = input.value.trim();
+        fetch("world.php?country=" + encodeURIComponent(c) + "&lookup=countries")
+            .then(r => r.text())
+            .then(t => result.innerHTML = t);
+    });
 
-        fetch(`world.php?country=${encodeURIComponent(country)}`)
-            .then(response => response.text())
-            .then(data => {
-                resultDiv.innerHTML = data;
-            })
-            .catch(error => {
-                resultDiv.innerHTML = "Error fetching data.";
-                console.error(error);
-            });
+    document.getElementById("lookup-cities").addEventListener("click", () => {
+        const c = input.value.trim();
+        fetch("world.php?country=" + encodeURIComponent(c) + "&lookup=cities")
+            .then(r => r.text())
+            .then(t => result.innerHTML = t);
     });
 });

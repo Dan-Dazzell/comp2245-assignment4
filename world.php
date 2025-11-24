@@ -1,56 +1,62 @@
 <?php
-header("Access-Control-Allow-Origin: *");
-
 $host = 'localhost';
-$dbname = 'world';
-$username = 'lab5_user';
-$password = 'password123';
+$user = 'root';
+$pass = '';
+$db = 'world';
 
-try {
-    $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    die("Database connection failed: " . $e->getMessage());
-}
+$pdo = new PDO("mysql:host=$host;dbname=$db;charset=utf8", $user, $pass);
 
-$country = isset($_GET['country']) ? trim($_GET['country']) : '';
+$country = isset($_GET['country']) ? $_GET['country'] : '';
+$type = isset($_GET['lookup']) ? $_GET['lookup'] : 'countries';
 
-if ($country !== '') {
+if ($type === 'cities') {
     $stmt = $pdo->prepare("
-        SELECT name, continent, independence_year, head_of_state
+        SELECT cities.name, cities.district, cities.population 
+        FROM cities 
+        JOIN countries ON cities.country_code = countries.code
+        WHERE countries.name LIKE :country
+    ");
+    $stmt->execute(['country' => "%$country%"]);
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    if ($rows) {
+        echo "<table>
+                <tr><th>City</th><th>District</th><th>Population</th></tr>";
+        foreach ($rows as $r) {
+            echo "<tr>
+                    <td>".htmlspecialchars($r['name'])."</td>
+                    <td>".htmlspecialchars($r['district'])."</td>
+                    <td>".htmlspecialchars($r['population'])."</td>
+                </tr>";
+        }
+        echo "</table>";
+    } else {
+        echo "No cities found.";
+    }
+
+} else {
+    $stmt = $pdo->prepare("
+        SELECT name, continent, indepyear, headofstate
         FROM countries
         WHERE name LIKE :country
     ");
     $stmt->execute(['country' => "%$country%"]);
-} else {
-    $stmt = $pdo->query("
-        SELECT name, continent, independence_year, head_of_state
-        FROM countries
-    ");
-}
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-$results = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-if ($results) {
-    echo "<table border='1' cellpadding='8'>";
-    echo "<tr>
-            <th>Country</th>
-            <th>Continent</th>
-            <th>Independence Year</th>
-            <th>Head of State</th>
-          </tr>";
-
-    foreach ($results as $row) {
-        echo "<tr>";
-        echo "<td>" . htmlspecialchars($row['name']) . "</td>";
-        echo "<td>" . htmlspecialchars($row['continent']) . "</td>";
-        echo "<td>" . htmlspecialchars($row['independence_year']) . "</td>";
-        echo "<td>" . htmlspecialchars($row['head_of_state']) . "</td>";
-        echo "</tr>";
+    if ($rows) {
+        echo "<table>
+                <tr><th>Country</th><th>Continent</th><th>Independence Year</th><th>Head of State</th></tr>";
+        foreach ($rows as $r) {
+            echo "<tr>
+                    <td>".htmlspecialchars($r['name'])."</td>
+                    <td>".htmlspecialchars($r['continent'])."</td>
+                    <td>".htmlspecialchars($r['indepyear'])."</td>
+                    <td>".htmlspecialchars($r['headofstate'])."</td>
+                </tr>";
+        }
+        echo "</table>";
+    } else {
+        echo "No countries found.";
     }
-
-    echo "</table>";
-} else {
-    echo "No countries found.";
 }
 ?>
