@@ -1,62 +1,44 @@
 <?php
+error_reporting(E_ALL);
+ini_set("display_errors", 1);
+
 $host = 'localhost';
-$user = 'root';
-$pass = '';
-$db = 'world';
+$username = 'dazzy69';
+$password = 'dazzy69';
+$database = 'world';
 
-$pdo = new PDO("mysql:host=$host;dbname=$db;charset=utf8", $user, $pass);
+$country = $_GET['country'] ?? '';
+$type = $_GET['lookup'] ?? '';
 
-$country = isset($_GET['country']) ? $_GET['country'] : '';
-$type = isset($_GET['lookup']) ? $_GET['lookup'] : 'countries';
+$conn = new PDO("mysql:host=$host;dbname=$database;charset=utf8", $username, $password);
 
-if ($type === 'cities') {
-    $stmt = $pdo->prepare("
-        SELECT cities.name, cities.district, cities.population 
-        FROM cities 
-        JOIN countries ON cities.country_code = countries.code
-        WHERE countries.name LIKE :country
-    ");
-    $stmt->execute(['country' => "%$country%"]);
-    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    if ($rows) {
-        echo "<table>
-                <tr><th>City</th><th>District</th><th>Population</th></tr>";
-        foreach ($rows as $r) {
-            echo "<tr>
-                    <td>".htmlspecialchars($r['name'])."</td>
-                    <td>".htmlspecialchars($r['district'])."</td>
-                    <td>".htmlspecialchars($r['population'])."</td>
-                </tr>";
-        }
-        echo "</table>";
-    } else {
-        echo "No cities found.";
-    }
-
+if ($type === "cities") {
+    $stmt = $conn->prepare(
+        "SELECT cities.name, cities.district, cities.population
+         FROM cities
+         JOIN countries ON cities.country_code = countries.code
+         WHERE countries.name LIKE :country"
+    );
 } else {
-    $stmt = $pdo->prepare("
-        SELECT name, continent, indepyear, headofstate
-        FROM countries
-        WHERE name LIKE :country
-    ");
-    $stmt->execute(['country' => "%$country%"]);
-    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $stmt = $conn->prepare(
+        "SELECT name, continent, independence_year, head_of_state
+         FROM countries
+         WHERE name LIKE :country"
+    );
+}
 
-    if ($rows) {
-        echo "<table>
-                <tr><th>Country</th><th>Continent</th><th>Independence Year</th><th>Head of State</th></tr>";
-        foreach ($rows as $r) {
-            echo "<tr>
-                    <td>".htmlspecialchars($r['name'])."</td>
-                    <td>".htmlspecialchars($r['continent'])."</td>
-                    <td>".htmlspecialchars($r['indepyear'])."</td>
-                    <td>".htmlspecialchars($r['headofstate'])."</td>
-                </tr>";
-        }
-        echo "</table>";
-    } else {
-        echo "No countries found.";
+$stmt->execute(['country' => "%$country%"]);
+$results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+if ($results) {
+    echo "<table border='1' cellpadding='8'>";
+    foreach ($results as $row) {
+        echo "<tr>";
+        foreach ($row as $v) echo "<td>$v</td>";
+        echo "</tr>";
     }
+    echo "</table>";
+} else {
+    echo "No results found.";
 }
 ?>
